@@ -8,7 +8,6 @@ import otpRoutes from './routes/otp_routes'
 import orderRoutes from './routes/order_routes'
 import chatRoutes from './routes/chat_routes'
 import connectDb from './config/database'
-import passportAuth from './config/passport'
 import path from 'path'
 import cookieParser = require('cookie-parser')
 import {app,server} from './socket/socket'
@@ -33,8 +32,6 @@ app.use(session({
     cookie: { secure: false }
 }));
 
-app.use(passportAuth.initialize())
-app.use(passportAuth.session())
 
 app.use(express.json())
 
