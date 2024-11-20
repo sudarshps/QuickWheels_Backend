@@ -7,7 +7,10 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./.tsbuildinfo",
+    "noEmit": false
   },
   "include": ["src//*.ts"],
   "exclude": ["node_modules","dist"]
