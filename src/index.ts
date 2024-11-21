@@ -16,7 +16,7 @@ dotenv.config({path:'../.env'})
 connectDb()
 
 app.use(cors({
-    origin: ['https://qw-frontend.vercel.app'],
+    origin: [process.env.FRONTEND_URL || ''],
     methods:['GET','POST','PUT','DELETE','PATCH'],
     credentials:true
 }))

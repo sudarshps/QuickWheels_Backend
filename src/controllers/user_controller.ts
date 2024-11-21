@@ -39,8 +39,8 @@ class UserController {
         res.cookie("refreshToken", refreshToken, {
           maxAge: 5 * 60 * 60 * 1000,
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
+          secure: true,
+          sameSite: "none",
         });
 
         res.status(200).json(createUser);
@@ -76,8 +76,8 @@ class UserController {
         res.cookie("refreshToken", refreshToken, {
           maxAge: 5 * 60 * 60 * 1000,
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "strict",
+          secure: true,
+          sameSite: "none",
         });
 
         res.status(200).json(validate);
@@ -244,14 +244,14 @@ class UserController {
       res.clearCookie("accessToken", {
         path: "/",
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "none",
       });
 
       res.clearCookie("refreshToken", {
         path: "/",
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
       });
 
       res
