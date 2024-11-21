@@ -1,6 +1,6 @@
 import express from 'express'
 import dotenv from 'dotenv'
-import cors from 'cors'
+import cors from 'cors' 
 import session from 'express-session'
 import userRoutes from './routes/user_routes'
 import adminRoutes from './routes/admin_routes'
@@ -11,12 +11,12 @@ import connectDb from './config/database'
 import path from 'path'
 import cookieParser = require('cookie-parser')
 import {app,server} from './socket/socket'
-dotenv.config()
+dotenv.config({path:'../.env'})
 
 connectDb()
 
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['https://qw-frontend.vercel.app'],
     methods:['GET','POST','PUT','DELETE','PATCH'],
     credentials:true
 }))
