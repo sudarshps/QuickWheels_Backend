@@ -2,12 +2,13 @@ import User, { IUser } from "../models/user_model";
 import CarModel, { ICar } from "../models/car_model";
 import CarMake, { ICarMakeCategory } from "../models/carmake-category_model";
 import CarType, { ICarTypeCategory } from "../models/cartype-category_model";
-import OrderModel from "../models/orders";
+import OrderModel, { IOrder } from "../models/orders";
 import mongoose,{ ObjectId, Types,Schema,QueryOptions } from "mongoose";
-import WalletModel from '../models/wallet_model'
-import ReviewModel from '../models/review_model'
+import WalletModel, { IWallet } from '../models/wallet_model'
+import ReviewModel, { IReview } from '../models/review_model'
+import { IUserRepository } from "../interface/user/IUserRepository";
 
-class UserRepository {
+class UserRepository implements IUserRepository {
   async createUser(userData: Partial<IUser>): Promise<IUser> {
     const user = new User(userData);
 
@@ -204,31 +205,31 @@ class UserRepository {
     });
   }
 
-  async successOrder(order: object) {
+  async successOrder(order: object): Promise<IOrder> {
     const orderData = new OrderModel(order);
     return await orderData.save();
   }
 
-  async removeHostCar(carId: string) {
+  async removeHostCar(carId: string): Promise<Document | null> {
     return await CarModel.findByIdAndDelete(carId);
   } 
 
 
-  async getWallet(userId:string){
+  async getWallet(userId:string): Promise<IUser | null>{
     return await User.findById(userId).select('wallet').populate('wallet')
   }
 
-  async createWallet(){
+  async createWallet(): Promise<IWallet>{
     const wallet = new WalletModel({balance:0})
     return wallet.save()
   }
 
-  async carRating(reviewDetails:object){
+  async carRating(reviewDetails:object): Promise<IReview>{
     const review = new ReviewModel(reviewDetails)
     return review.save()
   } 
 
-  async carReview(id:string){    
+  async carReview(id:string): Promise<IReview[]>{    
     const carId = new mongoose.Types.ObjectId(id)
     // const res = await ReviewModel.find({carId:id})
     const res = await ReviewModel.aggregate([{$match:{carId:carId}},{

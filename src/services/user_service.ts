@@ -1,4 +1,6 @@
 import userRepository from "../repositories/user_repository";
+import {IUserRepository} from '../interface/user/IUserRepository'
+import {IOrderRepository} from '../interface/order/IOrderRepository'
 import OrderRepository from '../repositories/order_repository'
 import { IUser } from "../models/user_model";
 import { ObjectId } from "mongodb";
@@ -8,19 +10,13 @@ import { ICar } from "../models/car_model";
 import { ICarMakeCategory } from "../models/carmake-category_model";
 import { ICarTypeCategory } from "../models/cartype-category_model";
 import {IReview} from '../models/review_model'
-import mongoose, {Schema, Types} from 'mongoose'
+import { Types} from 'mongoose'
+import {IUserService} from '../interface/user/IUserService'
 
 interface EmailValidate {
   emailExists: boolean;
   password?:string;
   token?: string;
-  message?: string;
-}
-
-interface UserResponse {
-  userCreated: boolean;
-  userId?: ObjectId;
-  accessToken?: string;
   message?: string;
 }
 
@@ -96,20 +92,23 @@ interface EditedCarDetailsType {
 }
 
 
-class UserService {
+class UserService implements IUserService{
+
+  constructor(private _userRepository: IUserRepository,private _orderRepository: IOrderRepository){}
+
   async createUser(userData: Partial<IUser>,loginMethod:string): Promise<userValidate | null> {
     const userPassword = userData.password
     const hashedPassword = await bcrypt.hash(userData.password as string, 10);
     userData.password = hashedPassword;
 
-    const userWallet = await userRepository.createWallet();
+    const userWallet = await this._userRepository.createWallet();
 
     if (!userWallet) {
       return null
     }
 
     userData.wallet = userWallet._id;
-    const user = await userRepository.createUser(userData);
+    const user = await this._userRepository.createUser(userData);
 
     if (user) {
       // const accesstoken = signAccessToken({id:user._id,email:user.email})
@@ -139,7 +138,7 @@ class UserService {
     longitude: number,
     latitude: number
   ): Promise<UserUpdateResponse> {
-    const user = await userRepository.updateUserProfile(
+    const user = await this._userRepository.updateUserProfile(
       userData,
       longitude,
       latitude
@@ -164,7 +163,7 @@ class UserService {
 
 
   async editUserProfile(userData:Partial<IUser>,email:string):Promise<IUser | null>{    
-    const user = await userRepository.editUserProfile(userData,email)
+    const user = await this._userRepository.editUserProfile(userData,email)
 
     if(!user){
       return null
@@ -174,7 +173,7 @@ class UserService {
   }
 
   async validateEmail(userData: Partial<IUser>): Promise<EmailValidate> {
-    const user = await userRepository.findUserByEmail(userData.email as string);
+    const user = await this._userRepository.findUserByEmail(userData.email as string);
     if (user) {
       // const token = signAccessToken({id:user._id,email:user.email})
       return {
@@ -192,7 +191,7 @@ class UserService {
   }
 
   async validateUser(userData: Partial<IUser>,loginMethod:string): Promise<userValidate> {
-    const user = await userRepository.validateUser(userData);    
+    const user = await this._userRepository.validateUser(userData);    
     if (user) {
       
       let isMatch = await bcrypt.compare(
@@ -247,11 +246,11 @@ class UserService {
   async updatePassword(email:string,password:string):Promise<Partial<IUser> | null> {
     const hashedPassword = await bcrypt.hash(password as string, 10);
 
-    return await userRepository.updatePassword(email,hashedPassword)
+    return await this._userRepository.updatePassword(email,hashedPassword)
   }
 
   async userDetails(email: string): Promise<UserDetails | void> {
-    const user = await userRepository.findUserByEmail(email);
+    const user = await this._userRepository.findUserByEmail(email);
     if (user) {
       return {
         id: user._id,
@@ -276,7 +275,7 @@ class UserService {
 
     const{images,...otherDetails} = editedDetails
 
-    const carDetails = await userRepository.editCarDetails(carId,otherDetails,images,isVerified,status)
+    const carDetails = await this._userRepository.editCarDetails(carId,otherDetails,images,isVerified,status)
 
     if(carDetails)return carDetails
 
@@ -290,7 +289,7 @@ class UserService {
     status: string,
     isActive: boolean
   ): Promise<CarDetailsResponse> {
-    const carDetails = await userRepository.carDetails(
+    const carDetails = await this._userRepository.carDetails(
       email,
       carData,
       isVerified,
@@ -312,7 +311,7 @@ class UserService {
   }
 
   async getCarDetails(email: string): Promise<ICar[] | null> {
-    const carDetails = await userRepository.getCarDetails(email);
+    const carDetails = await this._userRepository.getCarDetails(email);
 
     if (!carDetails) {
       return null;
@@ -336,10 +335,10 @@ class UserService {
     dateFrom: Date | undefined,
     dateTo: Date | undefined
   ): Promise<ICar[] | null> {
-    let carDetails = await userRepository.getRentCarDetails();
+    let carDetails = await this._userRepository.getRentCarDetails();
 
     if (carDetails && lng !== 0 && lat !== 0) {
-      carDetails = await userRepository.getCarDistance(lng, lat, distanceValue);
+      carDetails = await this._userRepository.getCarDistance(lng, lat, distanceValue);
     }
 
     if (carDetails && searchInput.trim()) {
@@ -446,7 +445,7 @@ class UserService {
   }
 
   async userCarDetails(id: string): Promise<ICarWithHostName | null> {
-    const response = (await userRepository.userCarDetails(
+    const response = (await this._userRepository.userCarDetails(
       id
     )) as ICarWithHostName;
 
@@ -465,10 +464,10 @@ class UserService {
   }
 
   async getCarMake(): Promise<ICarMakeCategory[]> {
-    return await userRepository.getCarMake();
+    return await this._userRepository.getCarMake();
   }
   async getCarType(): Promise<ICarTypeCategory[]> {
-    return await userRepository.getCarType();
+    return await this._userRepository.getCarType();
   }
 
   async setCarDate(
@@ -476,11 +475,11 @@ class UserService {
     dateTo: Date,
     carId: string
   ): Promise<ICar | null> {
-    return await userRepository.setCarDate(dateFrom, dateTo, carId);
+    return await this._userRepository.setCarDate(dateFrom, dateTo, carId);
   }
 
   async removeHostCar(carId: string): Promise<CarStatus> {
-    const response = await userRepository.removeHostCar(carId);
+    const response = await this._userRepository.removeHostCar(carId);
     if (!response) {
       return {
         isRemoved: false,
@@ -494,7 +493,7 @@ class UserService {
   }
 
   async getWallet(userId: string): Promise<Partial<IUser> | null> {
-    return await userRepository.getWallet(userId);
+    return await this._userRepository.getWallet(userId);
   }
 
   async carRating(userId:string,carId:string,orderId:string,rating:number,feedback:string):Promise<IReview | null>{
@@ -504,12 +503,12 @@ class UserService {
       rating,
       feedback
     }
-    const review = await userRepository.carRating(reviewDetails)
+    const review = await this._userRepository.carRating(reviewDetails)
     if(!review){
       return null
     }
     const reviewId = (review._id as Types.ObjectId).toString()
-    const updateOrderWithReview = await OrderRepository.updateOrderReview(orderId,reviewId)
+    const updateOrderWithReview = await this._orderRepository.updateOrderReview(orderId,reviewId)
     if(!updateOrderWithReview){
       return null
     }
@@ -517,8 +516,8 @@ class UserService {
   }
 
   async carReview(id:string):Promise<IReview[] | null> {
-    return await userRepository.carReview(id)
+    return await this._userRepository.carReview(id)
   }
 }
 
-export default new UserService();
+export default new UserService(userRepository,OrderRepository);

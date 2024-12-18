@@ -11,9 +11,29 @@ import connectDb from './config/database'
 import path from 'path'
 import cookieParser = require('cookie-parser')
 import {app,server} from './socket/socket'
+import logger from './config/logger'
+import morgan from 'morgan'
 dotenv.config({path:'../.env'})
 
+const morganFormat = ":method :url :status :response-time ms";
+  
 connectDb()
+
+app.use(
+    morgan(morganFormat, {
+      stream: {
+        write: (message) => {
+          const logObject = {
+            method: message.split(" ")[0],
+            url: message.split(" ")[1],
+            status: message.split(" ")[2],
+            responseTime: message.split(" ")[3],
+          };
+          logger.info(JSON.stringify(logObject));
+        },
+      },
+    })
+)
 
 app.use(cors({
     origin: [process.env.FRONTEND_URL || ''],

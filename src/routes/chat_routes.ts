@@ -5,10 +5,10 @@ import verifyUser from '../middlewares/auth_middlewares'
 
 const routes:Router = Router()
 
-routes.post('/accesschat',verifyUser,ChatController.accessChat)
-routes.get('/getchat',verifyUser,ChatController.getChat)
-routes.post('/sendmessage',verifyUser,ChatController.sendMessage)
-routes.get('/getallmessage',verifyUser,ChatController.getMessage)
+routes.post('/accesschat',verifyUser,ChatController.accessChat.bind(ChatController))
+routes.get('/getchat',verifyUser,ChatController.getChat.bind(ChatController))
+routes.post('/sendmessage',verifyUser,ChatController.sendMessage.bind(ChatController))
+routes.get('/getallmessage',verifyUser,ChatController.getMessage.bind(ChatController))
 
 
 export default routes

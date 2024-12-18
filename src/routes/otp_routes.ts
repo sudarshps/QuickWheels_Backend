@@ -1,9 +1,9 @@
 import {Router} from 'express'
-import {generateOtp,verifyOtp} from '../controllers/otp_controller'
+import OtpController from '../controllers/otp_controller'
 
 const routes:Router = Router()
 
-routes.post('/sentOtp',generateOtp) 
-routes.post('/verifyOtp',verifyOtp)
+routes.post('/sentOtp',OtpController.generateOtp.bind(OtpController)) 
+routes.post('/verifyOtp',OtpController.verifyOtp.bind(OtpController))
 
 export default routes

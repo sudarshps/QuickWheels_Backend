@@ -1,11 +1,13 @@
 import { Request,Response } from "express";
 import ChatService from '../services/chat_service'
+import { IChatService } from "../interface/chat/IChatService";
 
 class ChatController {
+    constructor(private _chatService:IChatService){}
     async accessChat(req:Request,res:Response):Promise<void> {
         try {
             const {receiverId,senderId} = req.body            
-            const chat = await ChatService.accessChat(receiverId,senderId)
+            const chat = await this._chatService.accessChat(receiverId,senderId)
             res.json(chat)
         } catch (error) {
             console.error('error in creating chat room',error);
@@ -15,7 +17,7 @@ class ChatController {
     async getChat(req:Request,res:Response):Promise<void> {
         try {             
             const userId = req.query.userId as string            
-            const messages = await ChatService.getChat(userId)                        
+            const messages = await this._chatService.getChat(userId)                        
             res.json(messages)
         } catch (error) {
             console.error('erron while fetching message details',error);
@@ -26,7 +28,7 @@ class ChatController {
         try {
             const{chatId,senderId,content} = req.body
             
-           const message = await ChatService.sendMessage(chatId,senderId,content)
+           const message = await this._chatService.sendMessage(chatId,senderId,content)
             res.json(message)
         } catch (error) {
             console.error('error while send message',error);
@@ -38,7 +40,7 @@ class ChatController {
         try {
             const chatId = req.query.userChatId as string
             
-            const message = await ChatService.getMessage(chatId)
+            const message = await this._chatService.getMessage(chatId)
             res.json(message)
         } catch (error) {
             console.error('error while fetching messages',error);
@@ -47,4 +49,4 @@ class ChatController {
     }
 }
 
-export default new ChatController()
+export default new ChatController(ChatService)

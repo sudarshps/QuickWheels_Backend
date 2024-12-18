@@ -1,8 +1,9 @@
-import { ObjectId,Types } from 'mongoose'
+import { Types } from 'mongoose'
 import ChatModel,{IChat} from '../models/chat_model'
 import MessageModel,{IMessage} from '../models/message_model'
+import {IChatRepository} from '../interface/chat/IChatRepository'
 
-class ChatRepository{
+class ChatRepository implements IChatRepository{
     async checkChat(receiverId:string,senderId:string):Promise<IChat | null> {
         return await ChatModel.findOne({
             $and:[

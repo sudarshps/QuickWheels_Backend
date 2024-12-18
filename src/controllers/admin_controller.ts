@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import AdminService from "../services/admin_service";
+import { IAdminService } from "../interface/admin/IAdminService";
 
 class AdminController {
+  constructor(private _adminService:IAdminService){}
   async getUserList(req: Request, res: Response): Promise<void> {
     try {
-      const getUsers = await AdminService.getUsers();
+      const getUsers = await this._adminService.getUsers();
       res.json(getUsers);
     } catch (error) {
       console.error("error in getting user list", error);
@@ -18,7 +20,7 @@ class AdminController {
         res.status(400).json({ message: "ID parameter is missing" });
         return;
       }
-      const getUserDetails = await AdminService.userDetails(id as string);
+      const getUserDetails = await this._adminService.userDetails(id as string);
       res.json(getUserDetails);
     } catch (error) {
       console.error("error getting user details", error);
@@ -32,7 +34,7 @@ class AdminController {
         res.status(400).json({ message: "ID parameter is missing" });
         return;
       }
-      const getHostDetails = await AdminService.hostDetails(id as string);
+      const getHostDetails = await this._adminService.hostDetails(id as string);
 
       res.json(getHostDetails);
     } catch (error) {
@@ -42,7 +44,7 @@ class AdminController {
 
   async getHostList(req: Request, res: Response): Promise<void> {
     try {
-      const getHosts = await AdminService.hostList();
+      const getHosts = await this._adminService.hostList();
       res.json(getHosts);
     } catch (error) {
       console.error("error in fetching host list", error);
@@ -52,7 +54,7 @@ class AdminController {
   async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
-      const validate = await AdminService.login(email, password);
+      const validate = await this._adminService.login(email, password);
       if (validate.validated) {
         const accessToken = validate.accessToken as string;
         res.cookie("adminAccessToken", accessToken, {
@@ -74,7 +76,7 @@ class AdminController {
     try {
       const { userStatus, id, note } = req.body;
 
-      const response = await AdminService.verifyUser(userStatus, id, note);
+      const response = await this._adminService.verifyUser(userStatus, id, note);
       res.json(response);
     } catch (error) {
       console.error("error in verifying user", error);
@@ -85,7 +87,7 @@ class AdminController {
     try {
       const { hostStatus, id, note } = req.body;
 
-      const response = await AdminService.verifyHost(hostStatus, id, note);
+      const response = await this._adminService.verifyHost(hostStatus, id, note);
       res.json(response);
     } catch (error) {
       console.error("error in verifying host", error);
@@ -95,7 +97,7 @@ class AdminController {
   async addMakeCategory(req: Request, res: Response): Promise<void> {
     try {
       const { newCategory } = req.body;
-      const response = await AdminService.addMakeCategory(newCategory);
+      const response = await this._adminService.addMakeCategory(newCategory);
       res.json(response);
     } catch (error) {
       console.error("error in posting category", error);
@@ -105,7 +107,7 @@ class AdminController {
   async addTypeCategory(req: Request, res: Response): Promise<void> {
     try {
       const { newCategory } = req.body;
-      const response = await AdminService.addTypeCategory(newCategory);
+      const response = await this._adminService.addTypeCategory(newCategory);
       res.json(response);
     } catch (error) {
       console.error("error in posting category", error);
@@ -117,7 +119,7 @@ class AdminController {
       const { page } = req.query;
       const dataSize = 5;
       const pageNum = Number(page);
-      const makeCategory = await AdminService.makeCategory(pageNum, dataSize);
+      const makeCategory = await this._adminService.makeCategory(pageNum, dataSize);
 
       res.json(makeCategory);
     } catch (error) {
@@ -130,7 +132,7 @@ class AdminController {
       const { page } = req.query;
       const dataSize = 5;
       const pageNum = Number(page);
-      const typeCategory = await AdminService.typeCategory(pageNum, dataSize);
+      const typeCategory = await this._adminService.typeCategory(pageNum, dataSize);
       res.json(typeCategory);
     } catch (error) {
       console.error("error in getting category", error);
@@ -141,7 +143,7 @@ class AdminController {
     try {
       const { categoryId } = req.query;
       if (typeof categoryId === "string") {
-        const response = await AdminService.removeMakeCategory(categoryId);
+        const response = await this._adminService.removeMakeCategory(categoryId);
         res.json(response);
       }
     } catch (error) {
@@ -153,7 +155,7 @@ class AdminController {
     try {
       const { categoryId } = req.query;
       if (typeof categoryId === "string") {
-        const response = await AdminService.removeTypeCategory(categoryId);
+        const response = await this._adminService.removeTypeCategory(categoryId);
         res.json(response);
       }
     } catch (error) {
@@ -164,7 +166,7 @@ class AdminController {
   async updateMakeCategory(req: Request, res: Response): Promise<void> {
     try {
       const { newCategory, categoryId } = req.body;
-      const response = await AdminService.updateMakeCategory(
+      const response = await this._adminService.updateMakeCategory(
         newCategory,
         categoryId
       );
@@ -177,7 +179,7 @@ class AdminController {
   async updateTypeCategory(req: Request, res: Response): Promise<void> {
     try {
       const { newCategory, categoryId } = req.body;
-      const response = await AdminService.updateTypeCategory(
+      const response = await this._adminService.updateTypeCategory(
         newCategory,
         categoryId
       );
@@ -190,7 +192,7 @@ class AdminController {
   async userStatus(req: Request, res: Response): Promise<void> {
     try {
       const { status, userId } = req.body;
-      const response = await AdminService.userStatus(status, userId);
+      const response = await this._adminService.userStatus(status, userId);
       res.json(response);
     } catch (error) {
       console.error("error in updating user block/unblock", error);
@@ -200,7 +202,7 @@ class AdminController {
   async hostStatus(req: Request, res: Response): Promise<void> {
     try {
       const { status, hostId, carId } = req.body;
-      const response = await AdminService.hostStatus(status, hostId, carId);
+      const response = await this._adminService.hostStatus(status, hostId, carId);
       res.json(response);
     } catch (error) {
       console.error("error in updating host status", error);
@@ -209,7 +211,7 @@ class AdminController {
 
   async getOrderList(req:Request,res:Response):Promise<void> {
     try {
-      const response = await AdminService.getOrderList()
+      const response = await this._adminService.getOrderList()
       res.json(response)
     } catch (error) {
       console.error('error while getting orders list',error);
@@ -220,7 +222,7 @@ class AdminController {
   async getOrderDetails(req:Request,res:Response):Promise<void> {
     try {
       const id = req.query.id as string
-      const response = await AdminService.getOrderDetails(id)
+      const response = await this._adminService.getOrderDetails(id)
       res.json(response)
     } catch (error) {
       console.error('error while fetching order details',error);
@@ -230,7 +232,7 @@ class AdminController {
 
   async dashboardOrder(req:Request,res:Response):Promise<void> {
     try {
-      const response = await AdminService.dashboardOrder()
+      const response = await this._adminService.dashboardOrder()
       res.json(response)
     } catch (error) {
       console.error('error while fatching order details',error);
@@ -239,7 +241,7 @@ class AdminController {
 
   async leaderboard(req:Request,res:Response):Promise<void> {
     try {
-      const response = await AdminService.leaderboard()
+      const response = await this._adminService.leaderboard()
       res.json(response)
     } catch (error) {
       console.error('error while fetching dashboard details',error);
@@ -248,7 +250,7 @@ class AdminController {
 
   async recentOrders(req:Request,res:Response):Promise<void> {
     try {
-      const response = await AdminService.recentOrders()
+      const response = await this._adminService.recentOrders()
       res.json(response)
     } catch (error) {          
       console.error('error while fetching orders',error);
@@ -256,4 +258,4 @@ class AdminController {
   }
 }
 
-export default new AdminController();
+export default new AdminController(AdminService);

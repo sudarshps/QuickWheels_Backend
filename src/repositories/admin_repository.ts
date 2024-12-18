@@ -4,13 +4,13 @@ import CarType, { ICarTypeCategory } from "../models/cartype-category_model";
 import CarMake, { ICarMakeCategory } from "../models/carmake-category_model";
 import { Types } from "mongoose";
 import OrderModel, { IOrder } from "../models/orders";
-import { populate } from "dotenv";
+import { IAdminRepository } from "../interface/admin/IAdminRepository";
 
 interface ICarWithUserDetails extends ICar {
   userDetails: IUser;
 }
 
-class AdminRepository {
+class AdminRepository implements IAdminRepository{
   async getUsers(): Promise<IUser[] | null> {
     return await User.find();
   }
@@ -132,7 +132,7 @@ class AdminRepository {
     return await CarMake.findByIdAndUpdate(categoryId, { name: newCategory });
   }
 
-  async updateTypeCategory(
+  async updateTypeCategory( 
     newCategory: string,
     categoryId: string
   ): Promise<ICarTypeCategory | null> {

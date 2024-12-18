@@ -1,7 +1,7 @@
 import Otp,{IOtp} from '../models/otp_model'
+import {IOtpRepository} from '../interface/otp/IOtpRepository'
 
-
-class OtpRepository {
+class OtpRepository implements IOtpRepository{
     async createOtp(otpData:Partial<IOtp>):Promise<IOtp>{
 
         const otp = new Otp(otpData)
@@ -21,4 +21,4 @@ class OtpRepository {
 }
 
 
-export default OtpRepository
+export default new OtpRepository()

@@ -1,21 +1,16 @@
 import OtpRepository from '../repositories/otp_repository'
-import { IOtp } from '../models/otp_model'
 import otpGenerator from 'otp-generator'
 import nodemailer from 'nodemailer'
-
+import { IOtpRepository } from '../interface/otp/IOtpRepository'
+import {IOtpService} from '../interface/otp/IOtpService'
 
 interface OtpValidate {
     validOtp: boolean;
     message?: string;
 }
 
-class OTPService {
-    private otpRepository: OtpRepository;
-  
-    constructor(otpRepository: OtpRepository) {
-      this.otpRepository = otpRepository;
-    }
-  
+class OTPService implements IOtpService{
+  constructor(private _otpRepository:IOtpRepository){}
     async generateOtp(email: string): Promise<void> {
         const otp = otpGenerator.generate(6, {
           digits: true,
@@ -24,7 +19,7 @@ class OTPService {
           specialChars: false,        
         });
   
-      await this.otpRepository.createOtp({email, otp});
+      await this._otpRepository.createOtp({email, otp});
   
       const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
@@ -46,7 +41,7 @@ class OTPService {
     }
 
     async verifyOtp(otp:string,emailToVerify:string):Promise<OtpValidate> {
-        const otpResponse = await this.otpRepository.validateOtp(otp,emailToVerify)
+        const otpResponse = await this._otpRepository.validateOtp(otp,emailToVerify)
         
         if(otpResponse){
             return{
@@ -61,4 +56,4 @@ class OTPService {
     }
   }
   
-  export default OTPService;
+  export default new OTPService(OtpRepository);

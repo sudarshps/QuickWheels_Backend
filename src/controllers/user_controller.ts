@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import UserService from "../services/user_service";
-import upload, { uploadToS3 } from "../services/upload_service";
+import { uploadToS3 } from "../services/upload_service";
+import { IUserService } from "../interface/user/IUserService";
+
 
 interface UploadedUserFiles {
   drivingIDFront: Express.Multer.File[];
@@ -14,11 +16,12 @@ interface UploadedCarFiles {
 }
 
 class UserController {
+  constructor(private _userService:IUserService){}
   async createUser(req: Request, res: Response): Promise<void> {
     try {
       const { userName, password, email,loginMethod } = req.body;
 
-      const createUser = await UserService.createUser({
+      const createUser = await this._userService.createUser({
         name: userName,
         password,
         email,
@@ -52,10 +55,10 @@ class UserController {
     }
   }
 
-  async checkUserMail(req: Request, res: Response): Promise<void> {
+  async checkUserMail(req: Request, res: Response): Promise<void>{
     try {
       const { email } = req.body;
-      const validate = await UserService.validateEmail({ email });
+      const validate = await this._userService.validateEmail({ email });
 
       res.status(200).json(validate);
     } catch (error) {
@@ -67,7 +70,7 @@ class UserController {
   async userLogin(req: Request, res: Response): Promise<void> {
     try {
       const { email, password,loginMethod } = req.body;
-      const validate = await UserService.validateUser({ email, password },loginMethod );
+      const validate = await this._userService.validateUser({ email, password },loginMethod );
       if (validate.validUser) {
         const accessToken = validate.accessToken;
         const refreshToken = validate.refreshToken;
@@ -77,7 +80,7 @@ class UserController {
           maxAge: 5 * 60 * 60 * 1000,
           httpOnly: true,
           secure: true,
-          sameSite: "none",
+          sameSite: "none",    
         });
 
         res.status(200).json(validate);
@@ -93,7 +96,7 @@ class UserController {
   async updatePassword(req:Request,res:Response):Promise<void> {
     try {
       const{email,password} = req.body
-      const response = await UserService.updatePassword(email,password)
+      const response = await this._userService.updatePassword(email,password)
       res.json(response)
     } catch (error) {
       console.error('error while updating password',error);
@@ -173,7 +176,7 @@ class UserController {
       }
     }
 
-    const userProfile = await UserService.editUserProfile(userData, email);
+    const userProfile = await this._userService.editUserProfile(userData, email);
 
     res.json(userProfile);
   }
@@ -227,7 +230,7 @@ class UserController {
       userData.drivingIDBack = backImageUpload;
       userData.profileUpdated = true;
 
-      const userProfile = await UserService.userProfile(
+      const userProfile = await this._userService.userProfile(
         userData,
         longitude,
         latitude
@@ -244,6 +247,7 @@ class UserController {
       res.clearCookie("accessToken", {
         path: "/",
         httpOnly: true,
+        secure: true,
         sameSite: "none",
       });
 
@@ -254,8 +258,7 @@ class UserController {
         sameSite: "none",
       });
 
-      res
-        .status(200)
+      res.status(200)
         .json({ status: true, message: "Logged out successfully" });
     } catch (error) {
       console.error("user logout server error", error);
@@ -279,7 +282,7 @@ class UserController {
   async userDetails(req: Request, res: Response): Promise<void> {
     const email = req.query.email as string;
     try {
-      const userDetails = await UserService.userDetails(email);
+      const userDetails = await this._userService.userDetails(email);
       if (userDetails) {
         res.json(userDetails);
       }
@@ -366,7 +369,7 @@ class UserController {
         let status = "Verification Pending";
         let isActive = true;
 
-        const carDetails = await UserService.carDetails(
+        const carDetails = await this._userService.carDetails(
           email,
           carData,
           isVerified,
@@ -487,7 +490,7 @@ class UserController {
       let isVerified = false;
       let status = "Verification Pending";
 
-      const carDetails = await UserService.editCarDetails(
+      const carDetails = await this._userService.editCarDetails(
         carId,
         editedDetails,
         isVerified,
@@ -504,7 +507,7 @@ class UserController {
     const email = req.query.email as string;
 
     try {
-      const carDetails = await UserService.getCarDetails(email);
+      const carDetails = await this._userService.getCarDetails(email);
       if (carDetails) {
         res.json(carDetails);
       }
@@ -550,7 +553,7 @@ class UserController {
         return;
       }
 
-      const carDetails = await UserService.rentCarDetails(
+      const carDetails = await this._userService.rentCarDetails(
         userId,
         sort,
         transmission,
@@ -575,7 +578,7 @@ class UserController {
     try {
       const { id } = req.query;
 
-      const carDetails = await UserService.userCarDetails(id as string);
+      const carDetails = await this._userService.userCarDetails(id as string);
       res.json(carDetails);
     } catch (error) {
       console.error("error in fetching user car details", error);
@@ -584,7 +587,7 @@ class UserController {
 
   async getCarMake(req: Request, res: Response): Promise<void> {
     try {
-      const response = await UserService.getCarMake();
+      const response = await this._userService.getCarMake();
       res.json(response);
     } catch (error) {
       console.error("error in getting car make list", error);
@@ -593,7 +596,7 @@ class UserController {
 
   async getCarType(req: Request, res: Response): Promise<void> {
     try {
-      const response = await UserService.getCarType();
+      const response = await this._userService.getCarType();
       res.json(response);
     } catch (error) {
       console.error("error in getting car make list", error);
@@ -603,7 +606,7 @@ class UserController {
   async setCarDate(req: Request, res: Response): Promise<void> {
     try {
       const { dateFrom, dateTo, carId } = req.body;
-      const response = await UserService.setCarDate(dateFrom, dateTo, carId);
+      const response = await this._userService.setCarDate(dateFrom, dateTo, carId);
       if (!response) {
         res.json({ dateUpdated: false, message: "not updated" });
       }
@@ -621,7 +624,7 @@ class UserController {
   async removeHostCar(req: Request, res: Response): Promise<void> {
     try {
       const { carId } = req.body;
-      const response = await UserService.removeHostCar(carId);
+      const response = await this._userService.removeHostCar(carId);
       res.json(response);
     } catch (error) {
       console.error("error in deleting the host car", error);
@@ -631,7 +634,7 @@ class UserController {
   async getWallet(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.query.userId as string;
-      const response = await UserService.getWallet(userId);
+      const response = await this._userService.getWallet(userId);
       res.json(response);
     } catch (error) {
       console.error("error while fetching wallet details", error);
@@ -641,7 +644,7 @@ class UserController {
   async carRating(req: Request, res: Response): Promise<void> {
     try {
       const { userId, carId, orderId, rating, feedback } = req.body;
-      const response = await UserService.carRating(
+      const response = await this._userService.carRating(
         userId,
         carId,
         orderId,
@@ -656,8 +659,8 @@ class UserController {
 
   async carReview(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.query.id as string;
-      const response = await UserService.carReview(id);
+      const id = req.query.id as string;    
+      const response = await this._userService.carReview(id);
       res.json(response);
     } catch (error) {
       console.error("error while fetching car rating", error);
@@ -665,4 +668,4 @@ class UserController {
   }
 }
 
-export default new UserController();
+export default new UserController(UserService);

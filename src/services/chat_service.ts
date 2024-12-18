@@ -1,16 +1,19 @@
-import { ObjectId,Types } from 'mongoose'
+import { Types } from 'mongoose'
 import { IChat } from '../models/chat_model'
 import { IMessage } from '../models/message_model'
 import ChatRepository from '../repositories/chat_repository'
+import { IChatRepository } from '../interface/chat/IChatRepository'
+import {IChatService} from '../interface/chat/IChatService'
 
-class ChatService {
+class ChatService implements IChatService{
+    constructor(private _chatRepository:IChatRepository){}
     async accessChat(receiverId:string,senderId:string):Promise<IChat | undefined| null> {
         try {
-            let chat = await ChatRepository.checkChat(receiverId,senderId)
+            let chat = await this._chatRepository.checkChat(receiverId,senderId)
  
             if(!chat){
-                 const createChat = await ChatRepository.createChat(receiverId,senderId)
-                 chat = await ChatRepository.checkChat(receiverId,senderId)
+                 const createChat = await this._chatRepository.createChat(receiverId,senderId)
+                 chat = await this._chatRepository.checkChat(receiverId,senderId)
             }
             return chat 
            
@@ -21,7 +24,7 @@ class ChatService {
 
     async getChat(userId:string):Promise<IChat[] | undefined | null>{
         try {            
-            let chats = await ChatRepository.getChat(userId)            
+            let chats = await this._chatRepository.getChat(userId)            
             if(!chats){
                 return null
             }
@@ -44,12 +47,12 @@ class ChatService {
                 chat:chatId,
                 content
             }
-            const message = await ChatRepository.sendMessage(newMessage)
+            const message = await this._chatRepository.sendMessage(newMessage)
             if(!message){
                 return null
             }
             const messageId = new Types.ObjectId(message._id)
-            const latestMessage = await ChatRepository.latestMessage(chatId,messageId)
+            const latestMessage = await this._chatRepository.latestMessage(chatId,messageId)
             if(!latestMessage){
                 return null
             }
@@ -62,7 +65,7 @@ class ChatService {
 
     async getMessage(chatId:string):Promise<IMessage[] | null | undefined>{
         try {
-            return await ChatRepository.getMessage(chatId)
+            return await this._chatRepository.getMessage(chatId)
         } catch (error) {
             console.error('error while fetching message list',error);
             
@@ -71,5 +74,5 @@ class ChatService {
 }
 
 
-export default new ChatService()
+export default new ChatService(ChatRepository)
 

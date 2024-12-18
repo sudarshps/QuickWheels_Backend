@@ -1,12 +1,16 @@
+import { IOrderRepository } from "../interface/order/IOrderRepository";
 import { IOrder } from "../models/orders";
 import OrderRepository from '../repositories/order_repository'
+import {IOrderService} from '../interface/order/IOrderService'
 
 interface OrderCancelType {
   isCancelled: boolean;
   message: string;
 }
 
-class OrderService {
+class OrderService implements IOrderService{
+
+  constructor(private _orderRepository:IOrderRepository){}
     async successOrder(
         orderId: string,
         toDate: Date,
@@ -33,7 +37,7 @@ class OrderService {
           method: method,
           status: "success",
         };
-        const response = await OrderRepository.successOrder(order);
+        const response = await this._orderRepository.successOrder(order);
         if (!response) {
           return undefined;
         }
@@ -41,7 +45,7 @@ class OrderService {
         // wallet money deduction
         if (method === "wallet") {
     
-          const getWallet = await OrderRepository.getWallet(userId);
+          const getWallet = await this._orderRepository.getWallet(userId);
           const walletId = getWallet?.wallet._id.toString();
           if (!walletId) {
             return undefined;
@@ -53,7 +57,7 @@ class OrderService {
             reason: "Order Placed",
           };
     
-          const moneyDeducted = await OrderRepository.deductMoney(
+          const moneyDeducted = await this._orderRepository.deductMoney(
             walletId,
             amount,
             history
@@ -62,7 +66,7 @@ class OrderService {
           if (!moneyDeducted) {
             return undefined;
           }
-          const reserveCar = await OrderRepository.reserveCar(
+          const reserveCar = await this._orderRepository.reserveCar(
             carId,
             toDate,
             fromDate
@@ -73,7 +77,7 @@ class OrderService {
           }
           return response;
         }
-        const reserveCar = await OrderRepository.reserveCar(carId, toDate, fromDate);
+        const reserveCar = await this._orderRepository.reserveCar(carId, toDate, fromDate);
         if (!reserveCar) {
           return undefined;
         }
@@ -81,16 +85,16 @@ class OrderService {
       }
 
       async userOrders(userId: string): Promise<IOrder[] | null> {
-        return await OrderRepository.userOrders(userId);
+        return await this._orderRepository.userOrders(userId);
       }
 
       async orderDetails(orderId: string): Promise<IOrder | null> {
-        return await OrderRepository.orderDetails(orderId);
+        return await this._orderRepository.orderDetails(orderId);
       }
  
 
       async cancelOrder(orderId: string): Promise<OrderCancelType> {
-        const response = await OrderRepository.cancelOrder(orderId);
+        const response = await this._orderRepository.cancelOrder(orderId);
         if (!response) {
           return {
             isCancelled: false,
@@ -99,7 +103,7 @@ class OrderService {
         }
         // removing the reserved date from car model
         const carId = response.carId.toString();
-        const updateCarDetails = await OrderRepository.cancelCarReservation(carId);
+        const updateCarDetails = await this._orderRepository.cancelCarReservation(carId);
     
         if (!updateCarDetails) {
           return {
@@ -111,7 +115,7 @@ class OrderService {
         const userId = response.userId.toString();
         const reason = "Cancelled the order";
         const refundDate = new Date();
-        const getWalletId = await OrderRepository.findWallet(userId);
+        const getWalletId = await this._orderRepository.findWallet(userId);
     
         const history = {
           date: refundDate,
@@ -127,7 +131,7 @@ class OrderService {
         }
         const walletId = getWalletId.wallet.toString();
     
-        const refundAmount = await OrderRepository.refundAmount(
+        const refundAmount = await this._orderRepository.refundAmount(
           walletId,
           history,
           amount
@@ -146,9 +150,12 @@ class OrderService {
       }
 
       async hostDashboardOrder(hostId:string):Promise<IOrder[] | null> {
-        const response = await OrderRepository.hostDashboardOrder(hostId)
-        return response.filter(order=>order.carId !== null)
+        const response = await this._orderRepository.hostDashboardOrder(hostId)
+        if(response){
+          return response.filter(order=>order.carId !== null)
+        }
+        return null
       }
 }
 
-export default new OrderService()
+export default new OrderService(OrderRepository)
