@@ -1,16 +1,23 @@
 import Otp,{IOtp} from '../models/otp_model'
 import {IOtpRepository} from '../interface/otp/IOtpRepository'
+import BaseRepository from '../repositories/base_repository'
 
-class OtpRepository implements IOtpRepository{
+class OtpRepository extends BaseRepository<IOtp> implements IOtpRepository{
+
+    constructor(){
+        super(Otp)
+    }
     async createOtp(otpData:Partial<IOtp>):Promise<IOtp>{
 
-        const otp = new Otp(otpData)
+        // const otp = new Otp(otpData)
 
-        return await otp.save()
+        // return await otp.save()
+        return await this.create(otpData)
     }
 
     async validateOtp(otp:string,emailToVerify:string):Promise<IOtp|null> {
-        const otpValidate = await Otp.findOne({otp,email:emailToVerify});
+        // const otpValidate = await Otp.findOne({otp,email:emailToVerify});
+        const otpValidate = await this.findOne({otp,email:emailToVerify})
         
         if(!otpValidate){
             return null;
