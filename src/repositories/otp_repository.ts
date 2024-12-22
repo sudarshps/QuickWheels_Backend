@@ -9,14 +9,10 @@ class OtpRepository extends BaseRepository<IOtp> implements IOtpRepository{
     }
     async createOtp(otpData:Partial<IOtp>):Promise<IOtp>{
 
-        // const otp = new Otp(otpData)
-
-        // return await otp.save()
         return await this.create(otpData)
     }
 
     async validateOtp(otp:string,emailToVerify:string):Promise<IOtp|null> {
-        // const otpValidate = await Otp.findOne({otp,email:emailToVerify});
         const otpValidate = await this.findOne({otp,email:emailToVerify})
         
         if(!otpValidate){

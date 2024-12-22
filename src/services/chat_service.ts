@@ -1,6 +1,4 @@
-import { Types } from 'mongoose'
 import { IChat } from '../models/chat_model'
-import { IMessage } from '../models/message_model'
 import ChatRepository from '../repositories/chat_repository'
 import { IChatRepository } from '../interface/chat/IChatRepository'
 import {IChatService} from '../interface/chat/IChatService'
@@ -18,7 +16,7 @@ class ChatService implements IChatService{
             return chat 
            
         } catch (error) {
-            console.error('error in sending message',error);
+            console.error('error in sending message',error); 
         }
     }
 
@@ -29,46 +27,14 @@ class ChatService implements IChatService{
                 return null
             }
             chats = chats?.map(chat => {
-                const chatObject = chat.toObject(); // Convert Mongoose object to plain JS object
-                chatObject.users = chatObject.users.filter((user: any) => user._id.toString() !== userId); // Exclude the logged-in user
+                const chatObject = chat.toObject();
+                chatObject.users = chatObject.users.filter((user: any) => user._id.toString() !== userId); 
                 return chatObject;
             })
             
             return chats
         } catch (error) {
             console.error('error while fetching messages',error);
-        }
-    }
-
-    async sendMessage(chatId:string,senderId:string,content:string):Promise<IMessage | null | undefined> {
-        try {
-            const newMessage = {
-                sender:senderId,
-                chat:chatId,
-                content
-            }
-            const message = await this._chatRepository.sendMessage(newMessage)
-            if(!message){
-                return null
-            }
-            const messageId = new Types.ObjectId(message._id)
-            const latestMessage = await this._chatRepository.latestMessage(chatId,messageId)
-            if(!latestMessage){
-                return null
-            }
-            return message
-        } catch (error) {
-            console.error('error in sending message',error);
-            
-        }
-    }
-
-    async getMessage(chatId:string):Promise<IMessage[] | null | undefined>{
-        try {
-            return await this._chatRepository.getMessage(chatId)
-        } catch (error) {
-            console.error('error while fetching message list',error);
-            
         }
     }
 }

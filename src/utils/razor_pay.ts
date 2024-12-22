@@ -40,7 +40,8 @@ export const refundOrder = async(req:Request,res:Response) => {
             key_id: process.env.RAZOR_PAY_API_KEY as string,
                key_secret: process.env.RAZOR_PAY_KEY_SECRET
             })
-        const {paymentId,amount,orderId} = req.body        
+        const {paymentId,amount,orderId} = req.body     
+           
         const razorpayResponse = await razorpay.payments.refund(paymentId,{
             "amount":amount,
             "speed":"normal"

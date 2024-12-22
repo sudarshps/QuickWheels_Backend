@@ -2,6 +2,11 @@ import { IOrderRepository } from "../interface/order/IOrderRepository";
 import { IOrder } from "../models/orders";
 import OrderRepository from '../repositories/order_repository'
 import {IOrderService} from '../interface/order/IOrderService'
+import { IUserRepository } from "../interface/user/IUserRepository";
+import user_repository from "../repositories/user_repository";
+import { ICarRepository } from "../interface/car/ICarRepository";
+import car_repository from "../repositories/car_repository";
+
 
 interface OrderCancelType {
   isCancelled: boolean;
@@ -10,7 +15,10 @@ interface OrderCancelType {
 
 class OrderService implements IOrderService{
 
-  constructor(private _orderRepository:IOrderRepository){}
+  constructor(private _orderRepository:IOrderRepository,
+    private _userRepository:IUserRepository,
+    private _carRepository:ICarRepository
+  ){}
     async successOrder(
         orderId: string,
         toDate: Date,
@@ -45,7 +53,7 @@ class OrderService implements IOrderService{
         // wallet money deduction
         if (method === "wallet") {
     
-          const getWallet = await this._orderRepository.getWallet(userId);
+          const getWallet = await this._userRepository.getWallet(userId);
           const walletId = getWallet?.wallet._id.toString();
           if (!walletId) {
             return undefined;
@@ -66,7 +74,7 @@ class OrderService implements IOrderService{
           if (!moneyDeducted) {
             return undefined;
           }
-          const reserveCar = await this._orderRepository.reserveCar(
+          const reserveCar = await this._carRepository.reserveCar(
             carId,
             toDate,
             fromDate
@@ -77,7 +85,7 @@ class OrderService implements IOrderService{
           }
           return response;
         }
-        const reserveCar = await this._orderRepository.reserveCar(carId, toDate, fromDate);
+        const reserveCar = await this._carRepository.reserveCar(carId, toDate, fromDate);
         if (!reserveCar) {
           return undefined;
         }
@@ -103,7 +111,7 @@ class OrderService implements IOrderService{
         }
         // removing the reserved date from car model
         const carId = response.carId.toString();
-        const updateCarDetails = await this._orderRepository.cancelCarReservation(carId);
+        const updateCarDetails = await this._carRepository.cancelCarReservation(carId);
     
         if (!updateCarDetails) {
           return {
@@ -115,7 +123,7 @@ class OrderService implements IOrderService{
         const userId = response.userId.toString();
         const reason = "Cancelled the order";
         const refundDate = new Date();
-        const getWalletId = await this._orderRepository.findWallet(userId);
+        const getWalletId = await this._userRepository.findWallet(userId);
     
         const history = {
           date: refundDate,
@@ -158,4 +166,4 @@ class OrderService implements IOrderService{
       }
 }
 
-export default new OrderService(OrderRepository)
+export default new OrderService(OrderRepository,user_repository,car_repository)

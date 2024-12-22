@@ -4,8 +4,10 @@ import cors from 'cors'
 import session from 'express-session'
 import userRoutes from './routes/user_routes'
 import adminRoutes from './routes/admin_routes'
+import messageRoutes from './routes/message_routes'
 import otpRoutes from './routes/otp_routes'
 import orderRoutes from './routes/order_routes'
+import carRoutes from './routes/car_routes'
 import chatRoutes from './routes/chat_routes'
 import connectDb from './config/database'
 import path from 'path'
@@ -58,7 +60,9 @@ app.use(express.json())
 app.use('/',userRoutes)
 app.use('/',otpRoutes)
 app.use('/',orderRoutes)
+app.use('/',carRoutes)
 app.use('/chat',chatRoutes)
+app.use('/chat',messageRoutes)
 app.use('/admin',adminRoutes)
 
 const PORT = process.env.port || 3000

@@ -4,7 +4,7 @@ import mongoose,{Document,Schema} from 'mongoose'
 
 export interface IChat extends Document{
     _id:ObjectId,
-    users:[object],
+    users:string[],
     latestMessage:object,
 
 }

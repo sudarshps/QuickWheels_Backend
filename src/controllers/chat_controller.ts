@@ -24,29 +24,6 @@ class ChatController {
         }
     } 
 
-    async sendMessage(req:Request,res:Response):Promise<void>{
-        try {
-            const{chatId,senderId,content} = req.body
-            
-           const message = await this._chatService.sendMessage(chatId,senderId,content)
-            res.json(message)
-        } catch (error) {
-            console.error('error while send message',error);
-            
-        }
-    }
-
-    async getMessage(req:Request,res:Response):Promise<void>{
-        try {
-            const chatId = req.query.userChatId as string
-            
-            const message = await this._chatService.getMessage(chatId)
-            res.json(message)
-        } catch (error) {
-            console.error('error while fetching messages',error);
-            
-        }
-    }
 }
 
 export default new ChatController(ChatService)
