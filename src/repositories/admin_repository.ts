@@ -5,14 +5,30 @@ import CarMake, { ICarMakeCategory } from "../models/carmake-category_model";
 import { Types } from "mongoose";
 import OrderModel, { IOrder } from "../models/orders";
 import { IAdminRepository } from "../interface/admin/IAdminRepository";
+import BaseRepository from '../repositories/base_repository'
 
 interface ICarWithUserDetails extends ICar {
   userDetails: IUser;
 }
 
 class AdminRepository implements IAdminRepository{
+
+  private userRepository: BaseRepository<IUser>;
+  private carRepository: BaseRepository<ICar>;
+  private carTypeRepository: BaseRepository<ICarTypeCategory>;
+  private carMakeRepository: BaseRepository<ICarMakeCategory>;
+  private orderRepository: BaseRepository<IOrder>;
+
+  constructor() {
+    this.userRepository = new BaseRepository(User);
+    this.carRepository = new BaseRepository(CarModel);
+    this.carTypeRepository = new BaseRepository(CarType);
+    this.carMakeRepository = new BaseRepository(CarMake);
+    this.orderRepository = new BaseRepository(OrderModel);
+  }
+
   async getUsers(): Promise<IUser[] | null> {
-    return await User.find();
+    return await this.userRepository.findAll();
   }
 
   async getHosts(): Promise<ICarWithUserDetails[] | null> {
@@ -30,7 +46,7 @@ class AdminRepository implements IAdminRepository{
   }
 
   async userDetails(id: string): Promise<IUser | null> {
-    return await User.findById(id);
+    return await this.userRepository.findById(id);
   }
 
   async hostDetails(id: string): Promise<ICar | null> {
@@ -63,7 +79,7 @@ class AdminRepository implements IAdminRepository{
     isVerified: boolean,
     note: string
   ): Promise<string | undefined> {
-    const response = await User.findByIdAndUpdate(id, {
+    const response = await this.userRepository.findByIdAndUpdate(id, {
       status: status,
       isVerified: isVerified,
       note: note,
@@ -77,7 +93,7 @@ class AdminRepository implements IAdminRepository{
     isVerified: boolean,
     note: string
   ): Promise<string | undefined> {
-    const response = await CarModel.findByIdAndUpdate(id, {
+    const response = await this.carRepository.findByIdAndUpdate(id, {
       status: status,
       isVerified: isVerified,
       note: note,
@@ -88,19 +104,19 @@ class AdminRepository implements IAdminRepository{
   async findTypeCategory(
     newCategory: string
   ): Promise<ICarTypeCategory | null> {
-    return await CarType.findOne({ name: newCategory });
+    return await this.carTypeRepository.findOne({ name: newCategory });
   }
 
   async addTypeCategory(newCategory: string): Promise<ICarTypeCategory> {
-    const carType = new CarType({ name: newCategory });
+    const carType = new CarType({name:newCategory})
 
-    return await carType.save();
+    return await carType.save()
   }
 
   async findMakeCategory(
     newCategory: string
   ): Promise<ICarMakeCategory | null> {
-    return await CarMake.findOne({ name: newCategory });
+    return await this.carMakeRepository.findOne({ name: newCategory });
   }
 
   async addMakeCategory(newCategory: string): Promise<ICarMakeCategory> {
@@ -110,37 +126,37 @@ class AdminRepository implements IAdminRepository{
   }
 
   async makeCategory(): Promise<ICarMakeCategory[]> {
-    return await CarMake.find();
+    return await this.carMakeRepository.findAll();
   }
 
   async typeCategory(): Promise<ICarTypeCategory[]> {
-    return await CarType.find();
+    return await this.carTypeRepository.findAll();
   }
 
   async removeMakeCategory(categoryId: string): Promise<any> {
-    return await CarMake.findByIdAndDelete(categoryId);
+    return await this.carMakeRepository.findByIdAndDelete(categoryId);
   }
 
   async removeTypeCategory(categoryId: string): Promise<any> {
-    return await CarType.findByIdAndDelete(categoryId);
+    return await this.carTypeRepository.findByIdAndDelete(categoryId);
   }
 
   async updateMakeCategory(
     newCategory: string,
     categoryId: string
   ): Promise<ICarMakeCategory | null> {
-    return await CarMake.findByIdAndUpdate(categoryId, { name: newCategory });
+    return await this.carMakeRepository.findByIdAndUpdate(categoryId, { name: newCategory });
   }
 
   async updateTypeCategory( 
     newCategory: string,
     categoryId: string
   ): Promise<ICarTypeCategory | null> {
-    return await CarType.findByIdAndUpdate(categoryId, { name: newCategory });
+    return await this.carTypeRepository.findByIdAndUpdate(categoryId, { name: newCategory });
   }
 
   async userStatus(status: boolean, userId: string): Promise<IUser | null> {
-    return await User.findByIdAndUpdate(userId, { isActive: status });
+    return await this.userRepository.findByIdAndUpdate(userId, { isActive: status });
   }
 
   async hostStatus(
@@ -148,13 +164,13 @@ class AdminRepository implements IAdminRepository{
     hostId: string,
     carId: string
   ): Promise<IUser | ICar | null> {
-    const response = await CarModel.findByIdAndUpdate(carId, {
+    const response = await this.carRepository.findByIdAndUpdate(carId, {
       isActive: status,
     });
     if (response) {
-      const user = await User.findById(hostId);
+      const user = await this.userRepository.findById(hostId);
       if (user?.isActive !== status) {
-        return await User.findByIdAndUpdate(hostId, { isActive: status });
+        return await this.userRepository.findByIdAndUpdate(hostId, { isActive: status });
       }
     }
     return response;
@@ -188,7 +204,7 @@ class AdminRepository implements IAdminRepository{
   }
 
   async dashboardOrder(): Promise<IOrder[] | null> {
-    return await OrderModel.find();
+    return await this.orderRepository.findAll();
   }
 
   async leaderboard(): Promise<IOrder[] | null> {

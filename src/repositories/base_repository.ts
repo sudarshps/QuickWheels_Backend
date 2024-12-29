@@ -1,4 +1,4 @@
-import { Model, Document, FilterQuery, UpdateQuery,Types,QueryOptions,Query } from 'mongoose';
+import { Model, Document, FilterQuery, UpdateQuery,Types,QueryOptions } from 'mongoose';
 
 class BaseRepository<T extends Document> {
     protected model: Model<T>;
@@ -19,6 +19,10 @@ class BaseRepository<T extends Document> {
     async find(query: FilterQuery<T>): Promise<T[]> {
         return await this.model.find(query).exec();
     }
+
+    async findAll(): Promise<T[]> {
+        return await this.model.find();
+      }
 
     async findByIdAndUpdate(
         id: string | Types.ObjectId,
