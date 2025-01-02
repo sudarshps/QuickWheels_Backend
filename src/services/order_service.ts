@@ -29,7 +29,8 @@ class OrderService implements IOrderService{
         amount: number,
         userId: string
       ): Promise<IOrder | undefined> {
-        let orderAmount = amount
+        try {
+          let orderAmount = amount
         if(method==='razorpay'){
           orderAmount = amount/100
         }
@@ -90,19 +91,35 @@ class OrderService implements IOrderService{
           return undefined;
         }
         return response;
+        } catch (error) {
+          console.error('error while order creation!');
+          throw error
+        }
+        
       }
 
       async userOrders(userId: string): Promise<IOrder[] | null> {
-        return await this._orderRepository.userOrders(userId);
+        try {
+          return await this._orderRepository.userOrders(userId);
+        } catch (error) {
+          console.error('error in user orders!');
+          throw error
+        }
       }
 
       async orderDetails(orderId: string): Promise<IOrder | null> {
-        return await this._orderRepository.orderDetails(orderId);
+        try {
+          return await this._orderRepository.orderDetails(orderId);
+        } catch (error) {
+          console.error('error in fetching order details!');
+          throw error
+        }
       }
  
 
       async cancelOrder(orderId: string): Promise<OrderCancelType> {
-        const response = await this._orderRepository.cancelOrder(orderId);
+        try {
+          const response = await this._orderRepository.cancelOrder(orderId);
         if (!response) {
           return {
             isCancelled: false,
@@ -155,14 +172,23 @@ class OrderService implements IOrderService{
           isCancelled: true,
           message: "Order cancellation successful",
         };
+        } catch (error) {
+          console.error('error while cancelling order!');
+          throw error
+        }
       }
 
       async hostDashboardOrder(hostId:string):Promise<IOrder[] | null> {
-        const response = await this._orderRepository.hostDashboardOrder(hostId)
+        try {
+          const response = await this._orderRepository.hostDashboardOrder(hostId)
         if(response){
           return response.filter(order=>order.carId !== null)
         }
         return null
+        } catch (error) {
+          console.error('error in host dashboard order!');
+          throw error
+        }
       }
 }
 
