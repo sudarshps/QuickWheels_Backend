@@ -42,11 +42,17 @@ class AdminService implements IAdminService{
   constructor(private _adminRepository: IAdminRepository){}
 
   async getUsers(): Promise<IUser[] | null> {
-    return await this._adminRepository.getUsers();
+    try {
+      return await this._adminRepository.getUsers();
+    } catch (error) {
+      console.error('Error fetching users:',error);
+      throw error
+    }
   }
 
   async hostList(): Promise<HostDetails[] | null> {
-    const hostDetails = await this._adminRepository.getHosts();
+    try {
+      const hostDetails = await this._adminRepository.getHosts();
     if (!hostDetails) {
       return null;
     }    
@@ -63,18 +69,33 @@ class AdminService implements IAdminService{
         isActive:host.isActive,
         status: host.status,
       }));
+    } catch (error) {
+      console.error('Error fetching hosts:',error);
+      throw error
+    }
   }
 
   async userDetails(id: string): Promise<IUser | null> {
-    return await this._adminRepository.userDetails(id);
+    try {
+      return await this._adminRepository.userDetails(id);
+    } catch (error) {
+      console.error('Error fetching userdetails:',error);
+      throw error
+    }
   }
 
   async hostDetails(id: string): Promise<ICar | null> {
-    return await this._adminRepository.hostDetails(id);
+    try {
+      return await this._adminRepository.hostDetails(id);
+    } catch (error) {
+      console.error('Error fetching hostdetails:',error);
+      throw error
+    }
   }
 
   async login(email: string, password: string): Promise<AdminValidation> {
-    const adminMail = process.env.ADMIN_EMAIL;
+    try {
+      const adminMail = process.env.ADMIN_EMAIL;
     const adminPass = process.env.ADMIN_PASS;
     const accessSecret = process.env.JWT_ACCESS_SECRET;
 
@@ -95,6 +116,10 @@ class AdminService implements IAdminService{
       validated: false,
       message: "admin validation failed",
     };
+    } catch (error) {
+      console.error('Error on logging in:',error);
+      throw error
+    }
   }
 
   async verifyUser(
@@ -102,7 +127,8 @@ class AdminService implements IAdminService{
     id: string,
     note: string
   ): Promise<UserVerification> {
-    let isVerified = false;
+    try {
+      let isVerified = false;
     if (status === "Verified") {
       isVerified = true;
     }
@@ -124,6 +150,10 @@ class AdminService implements IAdminService{
       statusUpdated: false,
       message: "status updated",
     };
+    } catch (error) {
+      console.error('Error verifying user:',error);
+      throw error
+    }
   }
 
   async verifyHost(
@@ -131,7 +161,8 @@ class AdminService implements IAdminService{
     id: string,
     note: string
   ): Promise<UserVerification> {
-    let isVerified = false;
+    try {
+      let isVerified = false;
     if (status === "Verified") {
       isVerified = true;
     }
@@ -153,10 +184,15 @@ class AdminService implements IAdminService{
       statusUpdated: false,
       message: "status updated",
     };
+    } catch (error) {
+      console.error('Error verifying hosts:',error);
+      throw error
+    }
   }
 
   async addTypeCategory(newCategory: string): Promise<CategoryResponseType | null> {
-    const exist = await this._adminRepository.findTypeCategory(newCategory)
+    try {
+      const exist = await this._adminRepository.findTypeCategory(newCategory)
     if(!exist){
       const response = await this._adminRepository.addTypeCategory(newCategory);
       if (!response) {
@@ -171,10 +207,16 @@ class AdminService implements IAdminService{
       };
     }
     return null 
+    } catch (error) {
+      console.error('Error in adding type category:',error);
+      throw error
+    }
+    
   }
 
   async addMakeCategory(newCategory: string): Promise<CategoryResponseType | null> {
-    const exist = await this._adminRepository.findMakeCategory(newCategory)
+    try {
+      const exist = await this._adminRepository.findMakeCategory(newCategory)
     if(!exist){
       const response = await this._adminRepository.addMakeCategory(newCategory);
     if (!response) {
@@ -189,11 +231,15 @@ class AdminService implements IAdminService{
     };
     }
     return null
-    
+    } catch (error) {
+      console.error('Error in adding make category:',error);
+      throw error
+    }
   }
 
   async makeCategory(page:number,dataSize:number): Promise<{totalPages:number,data:ICarMakeCategory[]}> {
-    let response = await this._adminRepository.makeCategory();
+    try {
+      let response = await this._adminRepository.makeCategory();
     const startIndex = (page-1) * dataSize 
     const endIndex = page * dataSize 
     const totalPages = Math.ceil(response.length/dataSize)
@@ -202,10 +248,15 @@ class AdminService implements IAdminService{
       totalPages,
       data:response
     }
+    } catch (error) {
+      console.error('Error fetching make category:',error);
+      throw error
+    }
   }
 
   async typeCategory(page:number,dataSize:number): Promise<{totalPages:number,data:ICarMakeCategory[]}> {
-    let response = await this._adminRepository.typeCategory()
+    try {
+      let response = await this._adminRepository.typeCategory()
     const startIndex = (page-1) * dataSize
     const endIndex = page * dataSize
     const totalPages = Math.ceil(response.length/dataSize)
@@ -214,42 +265,58 @@ class AdminService implements IAdminService{
       totalPages,
       data:response
     }
+    } catch (error) {
+      console.error('Error fetching type category:',error);
+      throw error
+    }
   }
 
   async removeMakeCategory(categoryId: string): Promise<CategoryResponseType | undefined> {
-    if (typeof categoryId === "string") {
-      const response = await this._adminRepository.removeMakeCategory(categoryId);
-      if(!response){
+    try {
+      if (typeof categoryId === "string") {
+        const response = await this._adminRepository.removeMakeCategory(categoryId);
+        if(!response){
+          return{
+            categoryRemoved:false,
+            message:'category was not removed'
+          }
+        }
         return{
-          categoryRemoved:false,
-          message:'category was not removed'
+          categoryRemoved:true,
+          message:'category removed successfully'
         }
       }
-      return{
-        categoryRemoved:true,
-        message:'category removed successfully'
-      }
+    } catch (error) {
+      console.error('Error in remove make category:',error);
+      throw error
     }
   }
 
   async removeTypeCategory(categoryId: string): Promise<CategoryResponseType | undefined> {
-    if (typeof categoryId === "string") {
-      const response = await this._adminRepository.removeTypeCategory(categoryId);
-      if(!response){
+    try {
+      if (typeof categoryId === "string") {
+        const response = await this._adminRepository.removeTypeCategory(categoryId);
+        if(!response){
+          return{
+            categoryRemoved:false,
+            message:'category was not removed'
+          }
+        }
         return{
-          categoryRemoved:false,
-          message:'category was not removed'
+          categoryRemoved:true,
+          message:'category removed successfully'
         }
       }
-      return{
-        categoryRemoved:true,
-        message:'category removed successfully'
-      }
+    } catch (error) {
+      console.error('Error in remove type category:',error);
+      throw error
     }
+   
   }
 
   async updateMakeCategory(newCategory:string,categoryId:string): Promise<CategoryResponseType | undefined | null> {
-    const exist = await this._adminRepository.findMakeCategory(newCategory)
+    try {
+      const exist = await this._adminRepository.findMakeCategory(newCategory)
     if(!exist){
       if(typeof categoryId === "string"){
         const response = await this._adminRepository.updateMakeCategory(newCategory,categoryId)
@@ -266,11 +333,17 @@ class AdminService implements IAdminService{
       }
     }
     return null
+    } catch (error) {
+      console.error('Error in updating make category:',error);
+      throw error
+    }
+    
     
   }
 
   async updateTypeCategory(newCategory:string,categoryId:string): Promise<CategoryResponseType | undefined | null> {
-    const exist = await this._adminRepository.findTypeCategory(newCategory)
+    try {
+      const exist = await this._adminRepository.findTypeCategory(newCategory)
     if(!exist){
       if(typeof categoryId === "string"){
         const response = await this._adminRepository.updateTypeCategory(newCategory,categoryId)
@@ -287,10 +360,16 @@ class AdminService implements IAdminService{
       }
     }
     return null
+    } catch (error) {
+      console.error('Error in remove type category:',error);
+      throw error
+    }
+    
   }
 
   async userStatus(status:boolean,userId:string):Promise<UserVerification | null> {
-    const response = await this._adminRepository.userStatus(status,userId)
+    try {
+      const response = await this._adminRepository.userStatus(status,userId)
     if(!response){
       return{
         statusUpdated:false,
@@ -301,10 +380,16 @@ class AdminService implements IAdminService{
       statusUpdated:true,
       message:'status updated'
     }
+    } catch (error) {
+      console.error('Error in fetching user status:',error);
+      throw error
+    }
+    
   }
 
   async hostStatus(status:boolean,hostId:string,carId:string):Promise<UserVerification | null> {
-    const response = await this._adminRepository.hostStatus(status,hostId,carId)
+    try {
+      const response = await this._adminRepository.hostStatus(status,hostId,carId)
     if(!response){
       return{
         statusUpdated:false,
@@ -315,26 +400,56 @@ class AdminService implements IAdminService{
       statusUpdated:true,
       message:'status updated'
     }
+    } catch (error) {
+      console.error('Error in fetching host status:',error);
+      throw error
+    }
+    
   }
 
   async getOrderList():Promise<IOrder[]>{
-    return await this._adminRepository.getOrderList()
+    try {
+      return await this._adminRepository.getOrderList()
+    } catch (error) {
+      console.error('Error in fetching order list:',error);
+      throw error
+    }
   }
 
   async getOrderDetails(id:string):Promise<IOrder | null>{
-    return await this._adminRepository.getOrderDetails(id)
+    try {
+      return await this._adminRepository.getOrderDetails(id)
+    } catch (error) {
+      console.error('Error in fetching order details:',error);
+      throw error
+    }
   } 
 
   async dashboardOrder():Promise<IOrder[] | null>{
-    return await this._adminRepository.dashboardOrder()
+    try {
+      return await this._adminRepository.dashboardOrder()
+    } catch (error) {
+      console.error('Error in fetching dashboard order:',error);
+      throw error
+    }
   }
 
   async leaderboard():Promise<IOrder[] | null>{
-    return await this._adminRepository.leaderboard()
+    try {
+      return await this._adminRepository.leaderboard()
+    } catch (error) {
+      console.error('Error in fetching leaderboard list:',error);
+      throw error
+    }
   }
 
   async recentOrders():Promise<IOrder[] | null>{
-    return await this._adminRepository.recentOrders()
+    try {
+      return await this._adminRepository.recentOrders()
+    } catch (error) {
+      console.error('Error in fetching recent orders:',error);
+      throw error
+    }
   }
 }
 
