@@ -3,31 +3,32 @@ import UserService from "../services/user_service";
 import { uploadToS3 } from "../services/upload_service";
 import { IUserService } from "../interface/user/IUserService";
 
-
 interface UploadedUserFiles {
   drivingIDFront: Express.Multer.File[];
   drivingIDBack: Express.Multer.File[];
 }
 
-
 class UserController {
-  constructor(private _userService:IUserService){}
+  constructor(private _userService: IUserService) {}
   async createUser(req: Request, res: Response): Promise<void> {
     try {
-      const { userName, password, email,loginMethod } = req.body;
+      const { userName, password, email, loginMethod } = req.body;
 
-      const createUser = await this._userService.createUser({
-        name: userName,
-        password,
-        email,
-        isVerified: false,
-        isHost: false,
-        isActive: true,
-        profileUpdated: false,
-        status: "Verification Pending",
-        approvedHost: false,
-        role: ["USER"],
-      }, loginMethod);
+      const createUser = await this._userService.createUser(
+        {
+          name: userName,
+          password,
+          email,
+          isVerified: false,
+          isHost: false,
+          isActive: true,
+          profileUpdated: false,
+          status: "Verification Pending",
+          approvedHost: false,
+          role: ["USER"],
+        },
+        loginMethod
+      );
 
       if (createUser?.validUser) {
         const accessToken = createUser.accessToken;
@@ -50,7 +51,7 @@ class UserController {
     }
   }
 
-  async checkUserMail(req: Request, res: Response): Promise<void>{
+  async checkUserMail(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.body;
       const validate = await this._userService.validateEmail({ email });
@@ -64,8 +65,11 @@ class UserController {
 
   async userLogin(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password,loginMethod } = req.body;
-      const validate = await this._userService.validateUser({ email, password },loginMethod );
+      const { email, password, loginMethod } = req.body;
+      const validate = await this._userService.validateUser(
+        { email, password },
+        loginMethod
+      );
       if (validate.validUser) {
         const accessToken = validate.accessToken;
         const refreshToken = validate.refreshToken;
@@ -75,7 +79,7 @@ class UserController {
           maxAge: 5 * 60 * 60 * 1000,
           httpOnly: true,
           secure: true,
-          sameSite: "none",    
+          sameSite: "none",
         });
 
         res.status(200).json(validate);
@@ -88,152 +92,163 @@ class UserController {
     }
   }
 
-  async updatePassword(req:Request,res:Response):Promise<void> {
+  async updatePassword(req: Request, res: Response): Promise<void> {
     try {
-      const{email,password} = req.body
-      const response = await this._userService.updatePassword(email,password)
-      res.json(response)
+      const { email, password } = req.body;
+      const response = await this._userService.updatePassword(email, password);
+      res.json(response);
     } catch (error) {
-      console.error('error while updating password',error);
+      console.error("error while updating password", error);
     }
   }
 
   async editUserProfile(req: Request, res: Response) {
-    const {
-      email,
-      phone,
-      dob,
-      address,
-      drivingID,
-      drivingExpDate,
-      existingFrontID,
-      existingBackID,
-    } = req.body;
-    const userData = {
-      ...(phone && { phone }),
-      ...(dob && { dob }),
-      ...(address && { address }),
-      ...(drivingID && { drivingID }),
-      ...(drivingExpDate && { drivingExpDate }),
-    };
+    try {
+      const {
+        email,
+        phone,
+        dob,
+        address,
+        drivingID,
+        drivingExpDate,
+        existingFrontID,
+        existingBackID,
+      } = req.body;
+      const userData = {
+        ...(phone && { phone }),
+        ...(dob && { dob }),
+        ...(address && { address }),
+        ...(drivingID && { drivingID }),
+        ...(drivingExpDate && { drivingExpDate }),
+      };
 
-    function isUploadedFiles(files: any): files is UploadedUserFiles {
-      return (
-        files &&
-        typeof files === "object" &&
-        ("drivingIDFront" in files || "drivingIDBack" in files)
+      function isUploadedFiles(files: any): files is UploadedUserFiles {
+        return (
+          files &&
+          typeof files === "object" &&
+          ("drivingIDFront" in files || "drivingIDBack" in files)
+        );
+      }
+
+      if (isUploadedFiles(req.files)) {
+        let frontFileBuffer = null;
+        let backFileBuffer = null;
+        if (req.files.drivingIDFront && req.files.drivingIDFront[0]) {
+          frontFileBuffer = req.files.drivingIDFront[0].buffer;
+        }
+        if (req.files.drivingIDBack && req.files.drivingIDBack[0]) {
+          backFileBuffer = req.files.drivingIDBack[0].buffer;
+        }
+
+        const bucketName = process.env.AWS_BUCKET_NAME as string;
+        const fileType = "image/jpeg";
+        if (existingFrontID) {
+          const frontImage = existingFrontID;
+          const frontImageUpload = await uploadToS3(
+            frontFileBuffer,
+            bucketName,
+            frontImage,
+            fileType
+          );
+          userData.drivingIDFront = frontImageUpload;
+
+          if (!frontImageUpload) {
+            return res.status(500).json({
+              message: "File upload failed",
+            });
+          }
+        }
+
+        if (existingBackID) {
+          const backImage = existingBackID;
+          const backImageUpload = await uploadToS3(
+            backFileBuffer,
+            bucketName,
+            backImage,
+            fileType
+          );
+          userData.drivingIDBack = backImageUpload;
+          if (!backImageUpload) {
+            return res.status(500).json({
+              message: "File upload failed",
+            });
+          }
+        }
+      }
+
+      const userProfile = await this._userService.editUserProfile(
+        userData,
+        email
       );
+
+      res.json(userProfile);
+    } catch (error) {
+      res.status(500).json({ message: "User profile editing failed!" });
     }
+  }
 
-    if (isUploadedFiles(req.files)) {
-      let frontFileBuffer = null;
-      let backFileBuffer = null;
-      if (req.files.drivingIDFront && req.files.drivingIDFront[0]) {
-        frontFileBuffer = req.files.drivingIDFront[0].buffer;
+  async userProfileCompletion(req: Request, res: Response) {
+    try {
+      if (!req.files) {
+        return res.status(400).json({ message: "No files uploaded" });
       }
-      if (req.files.drivingIDBack && req.files.drivingIDBack[0]) {
-        backFileBuffer = req.files.drivingIDBack[0].buffer;
+      let { longitude, latitude, ...userData } = req.body;
+
+      function isUploadedFiles(files: any): files is UploadedUserFiles {
+        return (
+          files &&
+          typeof files === "object" &&
+          "drivingIDFront" in files &&
+          "drivingIDBack" in files
+        );
       }
 
-      const bucketName = process.env.AWS_BUCKET_NAME as string;
-      const fileType = "image/jpeg";
-      if (existingFrontID) {
-        const frontImage = existingFrontID;
+      if (isUploadedFiles(req.files)) {
+        const frontFileBuffer = req.files.drivingIDFront[0].buffer;
+        const backFileBuffer = req.files.drivingIDBack[0].buffer;
+        const frontImage = `drivingIdFront_${Date.now()}${
+          req.files.drivingIDFront[0].originalname
+        }`;
+        const backImage = `drivingIdBack_${Date.now()}${
+          req.files.drivingIDBack[0].originalname
+        }`;
+        const bucketName = process.env.AWS_BUCKET_NAME as string;
+        const fileType = "image/jpeg";
         const frontImageUpload = await uploadToS3(
           frontFileBuffer,
           bucketName,
           frontImage,
           fileType
         );
-        userData.drivingIDFront = frontImageUpload;
-
-        if (!frontImageUpload) {
-          return res.status(500).json({
-            message: "File upload failed",
-          });
-        }
-      }
-
-      if (existingBackID) {
-        const backImage = existingBackID;
         const backImageUpload = await uploadToS3(
           backFileBuffer,
           bucketName,
           backImage,
           fileType
         );
-        userData.drivingIDBack = backImageUpload;
-        if (!backImageUpload) {
+
+        if (!frontImageUpload || !backImageUpload) {
           return res.status(500).json({
             message: "File upload failed",
           });
         }
+
+        userData.drivingIDFront = frontImageUpload;
+        userData.drivingIDBack = backImageUpload;
+        userData.profileUpdated = true;
+
+        const userProfile = await this._userService.userProfile(
+          userData,
+          longitude,
+          latitude
+        );
+
+        res.json(userProfile);
+      } else {
+        return res.status(400).json({ message: "Incorrect file structure" });
       }
-    }
-
-    const userProfile = await this._userService.editUserProfile(userData, email);
-
-    res.json(userProfile);
-  }
-
-  async userProfileCompletion(req: Request, res: Response) {
-    if (!req.files) {
-      return res.status(400).json({ message: "No files uploaded" });
-    }
-    let { longitude, latitude, ...userData } = req.body;
-
-    function isUploadedFiles(files: any): files is UploadedUserFiles {
-      return (
-        files &&
-        typeof files === "object" &&
-        "drivingIDFront" in files &&
-        "drivingIDBack" in files
-      );
-    }
-
-    if (isUploadedFiles(req.files)) {
-      const frontFileBuffer = req.files.drivingIDFront[0].buffer;
-      const backFileBuffer = req.files.drivingIDBack[0].buffer;
-      const frontImage = `drivingIdFront_${Date.now()}${
-        req.files.drivingIDFront[0].originalname
-      }`;
-      const backImage = `drivingIdBack_${Date.now()}${
-        req.files.drivingIDBack[0].originalname
-      }`;
-      const bucketName = process.env.AWS_BUCKET_NAME as string;
-      const fileType = "image/jpeg";
-      const frontImageUpload = await uploadToS3(
-        frontFileBuffer,
-        bucketName,
-        frontImage,
-        fileType
-      );
-      const backImageUpload = await uploadToS3(
-        backFileBuffer,
-        bucketName,
-        backImage,
-        fileType
-      );
-
-      if (!frontImageUpload || !backImageUpload) {
-        return res.status(500).json({
-          message: "File upload failed",
-        });
-      }
-
-      userData.drivingIDFront = frontImageUpload;
-      userData.drivingIDBack = backImageUpload;
-      userData.profileUpdated = true;
-
-      const userProfile = await this._userService.userProfile(
-        userData,
-        longitude,
-        latitude
-      );
-
-      res.json(userProfile);
-    } else {
-      return res.status(400).json({ message: "Incorrect file structure" });
+    } catch (error) {
+      res.status(500).json({ message: "Profile completion failed!" });
     }
   }
 
@@ -253,7 +268,8 @@ class UserController {
         sameSite: "none",
       });
 
-      res.status(200)
+      res
+        .status(200)
         .json({ status: true, message: "Logged out successfully" });
     } catch (error) {
       console.error("user logout server error", error);
@@ -314,7 +330,7 @@ class UserController {
 
   async carReview(req: Request, res: Response): Promise<void> {
     try {
-      const id = req.query.id as string;    
+      const id = req.query.id as string;
       const response = await this._userService.carReview(id);
       res.json(response);
     } catch (error) {
