@@ -13,6 +13,11 @@ interface OrderCancelType {
   message: string;
 }
 
+interface UserOrderType {
+  totalPages : number;
+  response:IOrder[] | null
+}
+
 class OrderService implements IOrderService{
 
   constructor(private _orderRepository:IOrderRepository,
@@ -98,9 +103,20 @@ class OrderService implements IOrderService{
         
       }
 
-      async userOrders(userId: string): Promise<IOrder[] | null> {
+      async userOrders(userId: string,pageNum:number,dataSize:number): Promise<UserOrderType | null> {
         try {
-          return await this._orderRepository.userOrders(userId);
+          let response =  await this._orderRepository.userOrders(userId);
+          const startIndex = (pageNum-1) * dataSize
+          const endIndex = pageNum * dataSize
+          let totalPages = 0
+          if(response && response.length){
+            totalPages = Math.ceil(response?.length/dataSize)
+            response = response?.slice(startIndex,endIndex)
+          }
+          return{
+            totalPages,
+            response
+          }
         } catch (error) {
           console.error('error in user orders!');
           throw error

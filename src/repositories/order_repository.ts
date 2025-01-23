@@ -29,7 +29,7 @@ class OrderRepository implements IOrderRepository {
 
   async userOrders(userId: string):Promise<IOrder[] | null> {
     try {
-      return await OrderModel.find({ userId: userId })
+      return await OrderModel.find({ userId: userId }).sort({_id:-1})
       .populate({
         path: "carId",
         populate: [
@@ -44,7 +44,6 @@ class OrderRepository implements IOrderRepository {
       console.error('error in finding user orders:',error);
       throw error
     }
-   
   }
 
   async orderDetails(orderId: string):Promise<IOrder | null> {

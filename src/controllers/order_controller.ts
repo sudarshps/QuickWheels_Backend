@@ -17,7 +17,10 @@ class OrderController{
       async userOrders(req:Request,res:Response):Promise<void> {
         try {
           const userId = req.query.userId as string 
-          const response = await this._orderService.userOrders(userId)            
+          const page = req.query.page as string
+          const dataSize = 5
+          const pageNum = Number(page)
+          const response = await this._orderService.userOrders(userId,pageNum,dataSize)  
           res.json(response)
         } catch (error) {
           console.error('error in fetching user orders',error);
