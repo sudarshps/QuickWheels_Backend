@@ -25,23 +25,7 @@ class AuthController {
         { expiresIn: "1h" }
       );
 
-    //   res.cookie("auth_token", token, {
-    //     maxAge: 3600000,
-    //     // httpOnly: true,
-    //     secure: true,
-    //     sameSite: "none",
-    //   });
-
-    res.cookie('auth_token', token, {
-        maxAge: 3600000,  // 1 hour
-        secure: true,     // Make sure it's using HTTPS
-        sameSite: 'lax', // Needed for cross-origin requests
-        // domain: '.yourdomain.com',  // Allow cookies across subdomains
-        path: '/',        // Cookie is accessible from all routes
-      });
-      
-
-      res.redirect(`${process.env.FRONTEND_URL}/login`);
+      res.redirect(`${process.env.FRONTEND_URL}/login?auth=${token}`);
     })(req, res, next);
   }
 

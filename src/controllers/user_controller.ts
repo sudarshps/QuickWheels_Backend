@@ -296,13 +296,6 @@ class UserController {
         sameSite: "none",
       });
 
-      res.clearCookie("auth_token", {
-        path: "/",
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-      });
-
       res
         .status(200)
         .json({ status: true, message: "Logged out successfully" });
