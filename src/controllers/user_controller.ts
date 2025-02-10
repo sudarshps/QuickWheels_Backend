@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import UserService from "../services/user_service";
 import { uploadToS3 } from "../services/upload_service";
 import { IUserService } from "../interface/user/IUserService";
+import jwt from 'jsonwebtoken'
 
 interface UploadedUserFiles {
   drivingIDFront: Express.Multer.File[];
@@ -48,6 +49,33 @@ class UserController {
       }
     } catch (error) {
       console.error("error in creating user");
+    }
+  }
+
+  async verifyUserToken(req:Request,res:Response):Promise<any> {
+    try {
+      const token = req.headers.authorization?.split(' ')[1]
+      if (!token) {
+        return res.status(401).json({ message: "No token provided" });
+      }
+      const secret = process.env.JWT_GAUTH_SECRET as string
+      jwt.verify(token,secret,(err,decoded)=>{
+        if(err){
+          return res.status(401).json({ message: "Invalid or expired token" });
+        }
+        if(decoded && typeof decoded === 'object'){
+          const {email,given_name} = decoded                   
+          return res.status(200).json({
+            message: "Token verified successfully",
+            email,
+            given_name,
+          }); 
+        }
+        
+      })
+    } catch (error) {
+      console.error('Error in token verifying (gauth)',error);
+      res.status(500).json({message: "Internal Server Error"})
     }
   }
 
@@ -262,6 +290,13 @@ class UserController {
       });
 
       res.clearCookie("refreshToken", {
+        path: "/",
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      });
+
+      res.clearCookie("auth_token", {
         path: "/",
         httpOnly: true,
         secure: true,

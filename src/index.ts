@@ -1,7 +1,6 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors' 
-import session from 'express-session'
 import userRoutes from './routes/user_routes'
 import adminRoutes from './routes/admin_routes'
 import messageRoutes from './routes/message_routes'
@@ -9,17 +8,22 @@ import otpRoutes from './routes/otp_routes'
 import orderRoutes from './routes/order_routes'
 import carRoutes from './routes/car_routes'
 import chatRoutes from './routes/chat_routes'
+import authRoutes from './routes/auth_routes'
 import connectDb from './config/database'
 import path from 'path'
 import cookieParser = require('cookie-parser')
 import {app,server} from './socket/socket'
 import logger from './config/logger'
 import morgan from 'morgan'
+import './config/passport'
+import passport from 'passport'
 dotenv.config({path:'../.env'})
 
 const morganFormat = ":method :url :status :response-time ms";
   
 connectDb()
+
+app.use(passport.initialize())
 
 app.use(
     morgan(morganFormat, {
@@ -47,13 +51,6 @@ app.use(cookieParser())
 
 app.use('/Uploads',express.static(path.join(__dirname,'Uploads')))
 
-app.use(session({
-    secret: 'secret-key',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false }
-}));
-
 
 app.use(express.json())
 
@@ -64,9 +61,9 @@ app.use('/',carRoutes)
 app.use('/chat',chatRoutes)
 app.use('/chat',messageRoutes)
 app.use('/admin',adminRoutes)
+app.use('/',authRoutes)
 
 const PORT = process.env.port || 3000
-
 
 
 server.listen(PORT,()=>{

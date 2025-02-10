@@ -6,6 +6,7 @@ import upload from '../services/upload_service'
 const router: Router = Router() 
 
 router.post('/checkMail',userController.checkUserMail.bind(userController)) 
+router.get('/verifyToken',userController.verifyUserToken.bind(userController))
 router.post('/userRegister',userController.createUser.bind(userController)) 
 router.post('/userLogin',userController.userLogin.bind(userController)) 
 router.patch('/updateuserpassword',userController.updatePassword.bind(userController)) 
