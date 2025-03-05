@@ -34,7 +34,6 @@ class UserController {
       if (createUser?.validUser) {
         const accessToken = createUser.accessToken;
         const refreshToken = createUser.refreshToken;
-
         res.cookie("accessToken", accessToken, { maxAge: 1800000 });
         res.cookie("refreshToken", refreshToken, {
           maxAge: 5 * 60 * 60 * 1000,
@@ -64,11 +63,11 @@ class UserController {
           return res.status(401).json({ message: "Invalid or expired token" });
         }
         if(decoded && typeof decoded === 'object'){
-          const {email,given_name} = decoded                   
+          const {email,username} = decoded                             
           return res.status(200).json({
             message: "Token verified successfully",
             email,
-            given_name,
+            username,
           }); 
         }
         
@@ -306,8 +305,7 @@ class UserController {
 
   async authorizedUser(req: Request, res: Response): Promise<object> {
     try {
-      const userPayload = req.user;
-
+      const userPayload = req.user;            
       return res.json({
         user: userPayload,
         valid: true,
